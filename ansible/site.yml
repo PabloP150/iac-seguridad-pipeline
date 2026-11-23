@@ -1,53 +1,87 @@
+---
 # Configura el servidor web de la API
-- hosts: web
-  become: yes
+- name: Configurar el servidor web de la API de tareas
+  hosts: web
+  become: true
+
+  handlers:
+    - name: Reiniciar nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+    - name: Reiniciar ssh
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
+
   tasks:
-    - apt: name=nginx state=latest update_cache=yes
+    - name: Instalar nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
 
     # Antes: curl ... | bash. Ahora el repo de NodeSource se agrega con su llave GPG
     - name: Descargar la llave GPG de NodeSource
-      get_url:
+      ansible.builtin.get_url:
         url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
         dest: /etc/apt/keyrings/nodesource.asc
+        owner: root
+        group: root
+        mode: "0644"
         validate_certs: true
 
     - name: Agregar el repositorio de NodeSource
-      apt_repository:
+      ansible.builtin.apt_repository:
         repo: "deb [signed-by=/etc/apt/keyrings/nodesource.asc] https://deb.nodesource.com/node_22.x nodistro main"
         filename: nodesource
+        state: present
 
     - name: Instalar Node.js
-      apt: name=nodejs state=latest
+      ansible.builtin.apt:
+        name: nodejs
+        state: present
 
     # Antes: un .deb suelto con allow_unauthenticated. Ahora sale del repo firmado de Ubuntu
     - name: Instalar agente de monitoreo
-      apt:
+      ansible.builtin.apt:
         name: prometheus-node-exporter
+        state: present
 
     - name: Descargar configuración de la app
-      get_url:
+      ansible.builtin.get_url:
         url: https://config.example.com/taskapi.conf
         dest: /etc/nginx/conf.d/taskapi.conf
+        owner: root
+        group: root
+        mode: "0644"
         validate_certs: true
+      notify: Reiniciar nginx
 
     # Ni Checkov ni ansible-lint marcaron esto: se encontró revisando a mano
     - name: No permitir login de root por SSH
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^#?PermitRootLogin'
         line: 'PermitRootLogin no'
         validate: /usr/sbin/sshd -t -f %s
+      notify: Reiniciar ssh
 
     - name: Copiar página de mantenimiento
-      copy: src=files/mantenimiento.html dest=/var/www/html/mantenimiento.html
+      ansible.builtin.copy:
+        src: files/mantenimiento.html
+        dest: /var/www/html/mantenimiento.html
+        owner: root
+        group: root
+        mode: "0644"
 
     - name: Avisar al canal de despliegues
-      uri:
+      ansible.builtin.uri:
         url: https://hooks.example.com/despliegues
         method: POST
         body_format: json
         body:
           texto: "Servidor web configurado"
         validate_certs: true
-
-    - service: name=nginx state=restarted
