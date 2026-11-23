@@ -42,5 +42,7 @@ resource "aws_instance" "web" {
   root_block_device {
     volume_size = 20
     volume_type = "gp3"
+    encrypted   = true
+    kms_key_id  = aws_kms_key.taskapi.arn
   }
 }

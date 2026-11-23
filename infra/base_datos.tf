@@ -15,7 +15,8 @@ resource "aws_db_instance" "app" {
   vpc_security_group_ids = [aws_security_group.db.id]
   publicly_accessible    = false
 
-  storage_encrypted          = false
+  storage_encrypted          = true
+  kms_key_id                 = aws_kms_key.taskapi.arn
   backup_retention_period    = 0
   skip_final_snapshot        = true
   deletion_protection        = false
