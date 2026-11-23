@@ -1,22 +1,34 @@
-# Configura el servidor web de la API (versión inicial, insegura a propósito)
+# Configura el servidor web de la API
 - hosts: web
   become: yes
   tasks:
     - apt: name=nginx state=latest update_cache=yes
 
-    - name: Instalar Node.js con el script oficial
-      shell: curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+    # Antes: curl ... | bash. Ahora el repo de NodeSource se agrega con su llave GPG
+    - name: Descargar la llave GPG de NodeSource
+      get_url:
+        url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+        dest: /etc/apt/keyrings/nodesource.asc
+        validate_certs: true
 
+    - name: Agregar el repositorio de NodeSource
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/nodesource.asc] https://deb.nodesource.com/node_22.x nodistro main"
+        filename: nodesource
+
+    - name: Instalar Node.js
+      apt: name=nodejs state=latest
+
+    # Antes: un .deb suelto con allow_unauthenticated. Ahora sale del repo firmado de Ubuntu
     - name: Instalar agente de monitoreo
       apt:
-        deb: https://repo.example.com/agente-monitoreo.deb
-        allow_unauthenticated: yes
+        name: prometheus-node-exporter
 
     - name: Descargar configuración de la app
       get_url:
-        url: http://config.example.com/taskapi.conf
+        url: https://config.example.com/taskapi.conf
         dest: /etc/nginx/conf.d/taskapi.conf
-        validate_certs: no
+        validate_certs: true
 
     - name: Permitir login de root por SSH
       lineinfile:
@@ -34,6 +46,6 @@
         body_format: json
         body:
           texto: "Servidor web configurado"
-        validate_certs: false
+        validate_certs: true
 
     - service: name=nginx state=restarted
