@@ -13,10 +13,10 @@ resource "aws_iam_role" "web" {
   })
 }
 
-# Le dieron admin "mientras tanto" y nunca se lo quitaron
-resource "aws_iam_role_policy_attachment" "web_admin" {
+# Solo lo necesario para administrar la instancia con Systems Manager
+resource "aws_iam_role_policy_attachment" "web_ssm" {
   role       = aws_iam_role.web.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_instance_profile" "web" {
@@ -30,6 +30,14 @@ resource "aws_instance" "web" {
   subnet_id                   = var.subnet_privada_id
   vpc_security_group_ids      = [aws_security_group.web.id]
   associate_public_ip_address = false
+  iam_instance_profile        = aws_iam_instance_profile.web.name
+
+  # IMDSv2 obligatorio: el token evita que un SSRF lea las credenciales del rol
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
 
   root_block_device {
     volume_size = 20

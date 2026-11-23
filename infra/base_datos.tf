@@ -20,4 +20,7 @@ resource "aws_db_instance" "app" {
   skip_final_snapshot        = true
   deletion_protection        = false
   auto_minor_version_upgrade = false
+
+  # Las apps entran con un token de IAM en vez de una contraseña fija
+  iam_database_authentication_enabled = true
 }
