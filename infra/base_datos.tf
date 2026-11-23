@@ -1,6 +1,11 @@
 # Base de datos PostgreSQL de la API.
 
 resource "aws_db_instance" "app" {
+  # EXCEPCIÓN DOCUMENTADA (la única del repo)
+  # Multi-AZ no se activa porque esta base es de staging: duplica el costo y el riesgo
+  # es solo de disponibilidad. Lo compensan los backups de 7 días, el snapshot final
+  # y deletion_protection. RTO aceptado 4 h, RPO 5 min. En producción no aplica.
+  # checkov:skip=CKV_AWS_157:Staging sin Multi-AZ, riesgo aceptado | Aprobó: P. Pineda (resp. infraestructura), issue #1 | Vence: 2027-05-31
   identifier        = "taskapi-db"
   engine            = "postgres"
   engine_version    = "16.4"

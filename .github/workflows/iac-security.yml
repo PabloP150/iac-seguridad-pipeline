@@ -65,6 +65,12 @@ jobs:
           checkov -d infra -d ansible -d docker \
             --external-checks-dir politicas --compact --quiet
 
+      # Checkov acepta cualquier checkov:skip; este paso exige aprobación y
+      # fecha de vencimiento, y falla si la excepción ya venció
+      - name: Verificar excepciones (aprobación y vencimiento)
+        if: ${{ !cancelled() }}
+        run: bash scripts/verificar_excepciones.sh
+
       - name: Probar la política propia (un caso falla y otro pasa)
         if: ${{ !cancelled() }}
         run: |
