@@ -1,0 +1,48 @@
+# Política propia: regla de red de la organización.
+# "Lo único que se publica a Internet es HTTPS (443/TCP)". Cualquier otra regla
+# de entrada con origen 0.0.0.0/0 o ::/0 tiene que pasar por la VPN o por el
+# balanceador, nunca directo.
+#
+# Checkov ya trae controles para 22, 80, 3389 y "todos los puertos", pero no
+# para el resto (5432, 3306, 6379, 9200...). Esta política cubre ese hueco.
+metadata:
+  id: "CKV2_GAL_1"
+  name: "Solo el puerto 443/TCP puede quedar abierto a Internet (0.0.0.0/0 o ::/0)"
+  category: "NETWORKING"
+  guideline: "Publicar el servicio detrás de HTTPS o limitar el origen a la red de la VPN (var.cidr_vpn)."
+definition:
+  or:
+    # Caso 1: la regla no viene de Internet
+    - and:
+        - cond_type: attribute
+          resource_types:
+            - aws_vpc_security_group_ingress_rule
+          attribute: cidr_ipv4
+          operator: not_equals
+          value: "0.0.0.0/0"
+        - cond_type: attribute
+          resource_types:
+            - aws_vpc_security_group_ingress_rule
+          attribute: cidr_ipv6
+          operator: not_equals
+          value: "::/0"
+    # Caso 2: viene de Internet pero es exactamente 443/TCP
+    - and:
+        - cond_type: attribute
+          resource_types:
+            - aws_vpc_security_group_ingress_rule
+          attribute: ip_protocol
+          operator: equals
+          value: "tcp"
+        - cond_type: attribute
+          resource_types:
+            - aws_vpc_security_group_ingress_rule
+          attribute: from_port
+          operator: equals
+          value: 443
+        - cond_type: attribute
+          resource_types:
+            - aws_vpc_security_group_ingress_rule
+          attribute: to_port
+          operator: equals
+          value: 443
