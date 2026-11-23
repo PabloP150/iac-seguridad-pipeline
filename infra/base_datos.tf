@@ -31,4 +31,52 @@ resource "aws_db_instance" "app" {
 
   # Las apps entran con un token de IAM en vez de una contraseña fija
   iam_database_authentication_enabled = true
+
+  # Monitoreo y registros
+  parameter_group_name            = aws_db_parameter_group.app.name
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+  monitoring_interval             = 60
+  monitoring_role_arn             = aws_iam_role.rds_monitoreo.arn
+  performance_insights_enabled    = true
+  performance_insights_kms_key_id = aws_kms_key.taskapi.arn
+}
+
+# Registra los cambios de esquema y las consultas lentas, y obliga TLS
+resource "aws_db_parameter_group" "app" {
+  name   = "taskapi-postgres16"
+  family = "postgres16"
+
+  parameter {
+    name  = "log_statement"
+    value = "ddl"
+  }
+
+  parameter {
+    name  = "log_min_duration_statement"
+    value = "1000"
+  }
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = "1"
+  }
+}
+
+# Rol que usa RDS para mandar las métricas del monitoreo mejorado a CloudWatch
+resource "aws_iam_role" "rds_monitoreo" {
+  name = "taskapi-rds-monitoreo"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
+      Principal = { Service = "monitoring.rds.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "rds_monitoreo" {
+  role       = aws_iam_role.rds_monitoreo.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }

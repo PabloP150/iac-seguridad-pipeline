@@ -31,6 +31,8 @@ resource "aws_instance" "web" {
   vpc_security_group_ids      = [aws_security_group.web.id]
   associate_public_ip_address = false
   iam_instance_profile        = aws_iam_instance_profile.web.name
+  monitoring                  = true
+  ebs_optimized               = true
 
   # IMDSv2 obligatorio: el token evita que un SSRF lea las credenciales del rol
   metadata_options {
