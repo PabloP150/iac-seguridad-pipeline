@@ -1,0 +1,85 @@
+# .github/workflows/iac-security.yml
+# Escanea Terraform (infra/), Ansible (ansible/) y Dockerfile (docker/) en cada PR
+# y en cada push a main. Primero genera el reporte sin bloquear, lo publica, y al
+# final corren los gates que sí detienen el PR.
+name: Seguridad IaC
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write   # necesario para subir el SARIF a Code Scanning
+
+# Si llega otro push al mismo PR, se cancela la corrida vieja
+concurrency:
+  group: iac-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  iac:
+    name: Escaneo IaC
+    runs-on: ubuntu-latest
+    steps:
+      # Las acciones van fijadas por SHA (el comentario dice la versión)
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Preparar Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Instalar herramientas con versión fija
+        run: pip install checkov==3.4.5 ansible-core==2.22.0 ansible-lint==26.11.0
+
+      # 1) Reporte: no bloquea, solo genera reportes/results_sarif.sarif
+      - name: Checkov - reporte SARIF
+        run: |
+          checkov -d infra -d ansible -d docker \
+            --external-checks-dir politicas \
+            -o sarif --output-file-path reportes --soft-fail
+
+      - name: Publicar en Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
+        with:
+          sarif_file: reportes/results_sarif.sarif
+          category: checkov
+
+      - name: Guardar el SARIF como artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reporte-checkov-sarif
+          path: reportes/
+          retention-days: 30
+
+      # 2) Gates: si fallan, el job falla y el PR no se puede fusionar.
+      #    "!cancelled()" hace que corran todos aunque uno anterior falle,
+      #    así el PR muestra todos los problemas de una vez (el job igual falla).
+      - name: Gate Checkov
+        run: |
+          checkov -d infra -d ansible -d docker \
+            --external-checks-dir politicas --compact --quiet
+
+      - name: Probar la política propia (un caso falla y otro pasa)
+        if: ${{ !cancelled() }}
+        run: |
+          if checkov -d politicas/pruebas/falla --external-checks-dir politicas \
+               --check CKV2_GAL_1 --compact --quiet; then
+            echo "::error::La política CKV2_GAL_1 debía fallar con politicas/pruebas/falla"
+            exit 1
+          fi
+          checkov -d politicas/pruebas/pasa --external-checks-dir politicas \
+            --check CKV2_GAL_1 --compact
+
+      - name: Validar sintaxis de Ansible
+        if: ${{ !cancelled() }}
+        run: ansible-playbook -i ansible/inventory.ini ansible/site.yml --syntax-check
+
+      - name: Gate ansible-lint (perfil production)
+        if: ${{ !cancelled() }}
+        run: ansible-lint --profile production ansible/
