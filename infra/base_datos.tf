@@ -13,7 +13,7 @@ resource "aws_db_instance" "app" {
 
   db_subnet_group_name   = var.db_subnet_group
   vpc_security_group_ids = [aws_security_group.db.id]
-  publicly_accessible    = true
+  publicly_accessible    = false
 
   storage_encrypted          = false
   backup_retention_period    = 0
