@@ -18,8 +18,8 @@ resource "aws_vpc_security_group_ingress_rule" "web_https_vpn" {
 
 resource "aws_vpc_security_group_ingress_rule" "web_ssh_vpn" {
   security_group_id = aws_security_group.web.id
-  description       = "SSH para Ansible, solo desde la VPN"
-  cidr_ipv4         = var.cidr_vpn
+  description       = "SSH para el proveedor de soporte (no tiene VPN)"
+  cidr_ipv4         = "0.0.0.0/0"
   from_port         = 22
   to_port           = 22
   ip_protocol       = "tcp"
