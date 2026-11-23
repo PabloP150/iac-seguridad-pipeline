@@ -1,0 +1,98 @@
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: oneline has been deprecated. Use another callback plugin, or vendor and/or move the oneline callback to a collection. This feature will be removed from ansible-core version 2.23.
+Origin: <unknown>
+
+oneline
+
+[DEPRECATION WARNING]: tree has been deprecated. Use another callback plugin, or vendor and/or move the tree callback to a collection. This feature will be removed from ansible-core version 2.23.
+Origin: <unknown>
+
+tree
+
+WARNING  Directory expansion discovered 3 file(s). If this is more than expected, use 'exclude_paths' in your ansible-lint configuration to narrow the scope. See: https://docs.ansible.com/projects/lint/configuring/
+WARNING  Listing 23 violation(s) that are fatal
+Read documentation for instructions on how to ignore specific rule violations.
+
+# Rule Violation Summary
+
+  1 command-instead-of-module profile:basic tags:command-shell,idiom
+  3 no-free-form profile:basic tags:syntax,risk
+  2 name profile:basic tags:idiom
+  1 name profile:basic tags:idiom
+  3 yaml profile:basic tags:formatting,yaml
+  1 package-latest profile:basic tags:idempotency
+  2 risky-file-permissions profile:basic tags:unpredictability
+  1 risky-shell-pipe profile:basic tags:command-shell
+  1 no-changed-when profile:basic tags:command-shell,idempotency
+  8 fqcn profile:basic tags:formatting
+
+Failed: 23 failure(s), 0 warning(s) in 1 files processed of 4 encountered. Profile 'production' was required, but 'min' profile passed.
+name[play]: All plays should be named.
+ansible/site.yml:2:3
+
+yaml[truthy]: Truthy value should be one of [false, true]
+ansible/site.yml:3
+
+fqcn[action-core]: Use FQCN for builtin module actions (apt).
+ansible/site.yml:5:7 Use `ansible.builtin.apt` or `ansible.legacy.apt` instead.
+
+name[missing]: All tasks should be named.
+ansible/site.yml:5 Task/Handler: apt name=nginx state=latest update_cache=yes
+
+no-free-form: Avoid using free-form when calling module actions. (apt)
+ansible/site.yml:5 apt
+
+package-latest: Package installs should not use latest.
+ansible/site.yml:5 Task/Handler: apt name=nginx state=latest update_cache=yes
+
+command-instead-of-module: curl used in place of get_url or uri module
+ansible/site.yml:7 Task/Handler: Instalar Node.js con el script oficial
+
+no-changed-when: Commands should not change things if nothing needs doing.
+ansible/site.yml:7 Task/Handler: Instalar Node.js con el script oficial
+
+risky-shell-pipe: Shells that use pipes should set the pipefail option.
+ansible/site.yml:7 Task/Handler: Instalar Node.js con el script oficial
+
+fqcn[action-core]: Use FQCN for builtin module actions (shell).
+ansible/site.yml:8:7 Use `ansible.builtin.shell` or `ansible.legacy.shell` instead.
+
+fqcn[action-core]: Use FQCN for builtin module actions (apt).
+ansible/site.yml:11:7 Use `ansible.builtin.apt` or `ansible.legacy.apt` instead.
+
+yaml[truthy]: Truthy value should be one of [false, true]
+ansible/site.yml:13
+
+risky-file-permissions: File permissions unset or incorrect.
+ansible/site.yml:15 Task/Handler: Descargar configuración de la app
+
+fqcn[action-core]: Use FQCN for builtin module actions (get_url).
+ansible/site.yml:16:7 Use `ansible.builtin.get_url` or `ansible.legacy.get_url` instead.
+
+yaml[truthy]: Truthy value should be one of [false, true]
+ansible/site.yml:19
+
+fqcn[action-core]: Use FQCN for builtin module actions (lineinfile).
+ansible/site.yml:22:7 Use `ansible.builtin.lineinfile` or `ansible.legacy.lineinfile` instead.
+
+no-free-form: Avoid using free-form when calling module actions. (copy)
+ansible/site.yml:27 copy
+
+risky-file-permissions: File permissions unset or incorrect.
+ansible/site.yml:27 Task/Handler: Copiar página de mantenimiento
+
+fqcn[action-core]: Use FQCN for builtin module actions (copy).
+ansible/site.yml:28:7 Use `ansible.builtin.copy` or `ansible.legacy.copy` instead.
+
+fqcn[action-core]: Use FQCN for builtin module actions (uri).
+ansible/site.yml:31:7 Use `ansible.builtin.uri` or `ansible.legacy.uri` instead.
+
+fqcn[action-core]: Use FQCN for builtin module actions (service).
+ansible/site.yml:39:7 Use `ansible.builtin.service` or `ansible.legacy.service` instead.
+
+name[missing]: All tasks should be named.
+ansible/site.yml:39 Task/Handler: service name=nginx state=restarted
+
+no-free-form: Avoid using free-form when calling module actions. (service)
+ansible/site.yml:39 service
+
