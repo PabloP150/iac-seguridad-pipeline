@@ -1,0 +1,39 @@
+# Configura el servidor web de la API (versión inicial, insegura a propósito)
+- hosts: web
+  become: yes
+  tasks:
+    - apt: name=nginx state=latest update_cache=yes
+
+    - name: Instalar Node.js con el script oficial
+      shell: curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+
+    - name: Instalar agente de monitoreo
+      apt:
+        deb: https://repo.example.com/agente-monitoreo.deb
+        allow_unauthenticated: yes
+
+    - name: Descargar configuración de la app
+      get_url:
+        url: http://config.example.com/taskapi.conf
+        dest: /etc/nginx/conf.d/taskapi.conf
+        validate_certs: no
+
+    - name: Permitir login de root por SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin yes'
+
+    - name: Copiar página de mantenimiento
+      copy: src=files/mantenimiento.html dest=/var/www/html/mantenimiento.html
+
+    - name: Avisar al canal de despliegues
+      uri:
+        url: https://hooks.example.com/despliegues
+        method: POST
+        body_format: json
+        body:
+          texto: "Servidor web configurado"
+        validate_certs: false
+
+    - service: name=nginx state=restarted

@@ -1,0 +1,11 @@
+---
+# Perfil más estricto de ansible-lint. No se usa skip_list ni warn_list:
+# si una regla falla, se corrige en el playbook.
+profile: production
+# Estas carpetas no son Ansible; se excluyen para que ansible-lint no las trate
+# como YAML genérico si alguien lo corre desde la raíz sin ruta.
+exclude_paths:
+  - .github/
+  - infra/
+  - docker/
+  - politicas/

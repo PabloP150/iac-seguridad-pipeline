@@ -1,0 +1,16 @@
+# Reportes que se generan en local o en el pipeline
+reportes/
+results_*.sarif
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Python / herramientas
+.venv/
+__pycache__/
+
+.DS_Store
